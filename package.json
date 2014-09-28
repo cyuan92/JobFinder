@@ -10,6 +10,8 @@
   "author": "Connie Yuan",
   "license": "ISC",
   "dependencies": {
-    "express": "^4.8.8"
+    "express": "^4.8.8",
+    "ejs": "*",
+    "async": "*"
   }
 }
