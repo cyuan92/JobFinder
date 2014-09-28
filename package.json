@@ -1,0 +1,14 @@
+{
+  "name": "JobFinder",
+  "version": "1.0.0",
+  "description": "An application to streamline the job-finding process.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Connie Yuan",
+  "license": "ISC",
+  "dependencies": {
+    "express": "^4.8.8"
+  }
+}
