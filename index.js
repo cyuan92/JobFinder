@@ -1,8 +1,9 @@
-var express = require('express')
+//Instantiaate the app using the Express framework for Node
+var express = require('express');
 var app = express();
 
-app.set ('port', (process.env.PORT || 5000))
-app.use (express.static(_dirname + '/public'))
+//Enable static files in /public for stylesheets, fonts, and client side javascript
+app.use(express.static(__dirname + '/public'));
 
 app.get('/', function(request, response) {
    response.sent('Hello World!')
