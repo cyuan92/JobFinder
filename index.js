@@ -3,6 +3,8 @@ var express = require('express');
 var routes = require('./routes/routes.js');
 var app = express();
 
+app.set('port', (process.env.PORT || 5000));
+
 //Enable static files in /public for stylesheets, fonts, and client side javascript
 app.use(express.static(__dirname + '/public'));
 
