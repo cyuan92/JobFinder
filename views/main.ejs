@@ -1,7 +1,27 @@
 <html>
+<head>
+	<title>Job Search</title>
+	<link rel="stylesheet" type="text/css" href="/css/bootstrap.min.css">
+	<link rel="stylesheet" type="text/css" href="/css/bootstrap-theme.min.css">
+	<link rel="stylesheet" type="text/css" href="/css/style.css">
+
+	<script src="http://code.jquery.com/jquery-1.10.1.min.js"></script>
+</head>
 <body>
-	<div class="test">
-		Hello World!
+	<div class="container">
+		<h3>Search</h3>
+		<form action="/search" method="post" autocomplete="off" role="form">
+			<div class="form-group">
+				<label for="query">Search For</label>
+				<input type="text" class="form-control" id="query" name="query" placeholder="Enter search">
+			</div>
+			<div class="form-group">
+				<label for="location">Where</label>
+				<input type="text" class="form-control" id="location" name="location" placeholder="Enter location">
+			</div>
+			
+			<button type="submit" class="btn btn-primary">Find Jobs</button>
+		</form>
 	</div>
 </body>
 </html>
