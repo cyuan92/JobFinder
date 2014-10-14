@@ -13,6 +13,9 @@
     "express": "^4.8.8",
     "ejs": "*",
     "async": "*",
-    "node-linkedin": "*"
+    "node-linkedin": "*",
+    "express-session": "*",
+    "body-parser": "*",
+    "xml2js": "*"
   }
 }
