@@ -6,11 +6,32 @@
 	<link rel="stylesheet" type="text/css" href="/css/style.css">
 
 	<script src="http://code.jquery.com/jquery-1.10.1.min.js"></script>
+		<script type="text/javascript">
+	var test = <%- JSON.stringify(data)%>;
+	var html = '';
+	for (i = 0; i < 10; i++){
+		document.write("<p>" + test[i].jobtitle + "<br>" 
+								   + test[i].company + "<br>"
+			  					   + test[i].city + "<br>"
+			  					 + test[i].state + "<br>"
+			  					 + test[i].country + "<br>"
+			  					 + test[i].source + "<br>"
+			  					 + test[i].date + "<br>"
+			  					 + test[i].snippet + "<br>"
+			  					 + test[i].url + "<br>"
+			  					 + test[i].latitude + "<br>"
+			  					 + test[i].longitude + "<br>"
+			  					 + test[i].jobkey + "<br>"
+			  					 + test[i].sponsored + "<br>"
+			  					 + test[i].expired + "<br>"
+			  					+ "</p>");
+	}
+	</script>
 </head>
 <body>
 	<div class="container">
-		<h3>Search Results</h3>
-		"<%=data%>"
+		
+		<div id='results'></div>
 	</div>
 </body>
 </html>

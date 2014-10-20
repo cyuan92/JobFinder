@@ -16,6 +16,6 @@
     "node-linkedin": "*",
     "express-session": "*",
     "body-parser": "*",
-    "xml2js": "*"
+    "xml-stream": "*"
   }
 }
