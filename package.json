@@ -15,7 +15,7 @@
     "async": "*",
     "express-session": "*",
     "body-parser": "*",
-    "xml-stream": "0.4.5",
-    "node-expat": "^2.3.6"
+    "xml-stream": "*",
+    "node-expat": "*"
   }
 }
