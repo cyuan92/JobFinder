@@ -9,23 +9,56 @@
 		<script type="text/javascript">
 	var test = <%- JSON.stringify(data)%>;
 	var html = '';
-	for (i = 0; i < 10; i++){
+	if (test[0] == "Indeed") {
+		for (i = 1; i < 11; i++){
 		document.write("<p>" + test[i].jobtitle + "<br>" 
-								   + test[i].company + "<br>"
-			  					   + test[i].city + "<br>"
-			  					 + test[i].state + "<br>"
-			  					 + test[i].country + "<br>"
-			  					 + test[i].source + "<br>"
-			  					 + test[i].date + "<br>"
-			  					 + test[i].snippet + "<br>"
-			  					 + test[i].url + "<br>"
-			  					 + test[i].latitude + "<br>"
-			  					 + test[i].longitude + "<br>"
-			  					 + test[i].jobkey + "<br>"
-			  					 + test[i].sponsored + "<br>"
-			  					 + test[i].expired + "<br>"
-			  					+ "</p>");
+							 + test[i].company + "<br>"
+		  					 + test[i].city + "<br>"
+		  					 + test[i].state + "<br>"
+		  					 + test[i].country + "<br>"
+		  					 + test[i].source + "<br>"
+		  					 + test[i].date + "<br>"
+		  					 + test[i].snippet + "<br>"
+		  					 + test[i].url + "<br>"
+		  					 + test[i].latitude + "<br>"
+		  					 + test[i].longitude + "<br>"
+		  					 + test[i].jobkey + "<br>"
+		  					 + test[i].sponsored + "<br>"
+		  					 + test[i].expired + "<br>"
+		  					 + "</p>");
+		}
+	} else if (test[0] == "CareerBuilder") {
+		for (i = 1; i < 11; i++){
+		document.write("<p>" + test[i].jobTitle + "<br>" 
+							 + test[i].company + "<br>"
+		  					 + test[i].city + "<br>"
+		  					 + test[i].state + "<br>"
+		  					 + test[i].companyDID + "<br>"
+		  					 + test[i].companyDetailsURL + "<br>"
+		  					 + test[i].DID + "<br>"
+		  					 + test[i].oNetCode + "<br>"
+		  					 + test[i].oNetFriendlyTitle + "<br>"
+		  					 + test[i].descriptionTeaser + "<br>"
+		  					 + test[i].distance + "<br>"
+		  					 + test[i].employmentType + "<br>"
+		  					 + test[i].educationRequired + "<br>"
+		  					 + test[i].experienceRequired + "<br>"
+		  					 + test[i].jobDetailsURL + "<br>"
+		  					 + test[i].location + "<br>"
+		  					 + test[i].displayCity + "<br>"
+		  					 + test[i].locationLatitude + "<br>"
+		  					 + test[i].locationLongitude + "<br>"
+		  					 + test[i].postedDate + "<br>"
+		  					 + test[i].pay + "<br>"
+		  					 + test[i].similarJobsURL + "<br>"
+		  					 + test[i].companyImageUrl + "<br>"
+		  					 + test[i].applyRequirements + "<br>"
+		  					 + test[i].skills + "<br>"
+
+		  					 + "</p>");
+		}
 	}
+
 	</script>
 </head>
 <body>
