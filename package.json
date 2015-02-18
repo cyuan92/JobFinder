@@ -13,9 +13,8 @@
     "express": "^4.8.8",
     "ejs": "*",
     "async": "*",
-    "node-linkedin": "*",
     "express-session": "*",
     "body-parser": "*",
-    "xml-stream": "*"
+    "xml-stream": "0.4.5"
   }
 }
