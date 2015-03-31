@@ -16,6 +16,8 @@
     "express-session": "*",
     "body-parser": "*",
     "xml-stream": "*",
-    "node-expat": "*"
+    "node-expat": "*",
+    "pg": "4.x",
+    "crypto": "*"
   }
 }

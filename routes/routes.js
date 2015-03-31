@@ -3,9 +3,45 @@
 var async = require('async');
 var http = require('http');
 var XmlStream = require('xml-stream');
+var crypto = require('crypto');
 
+//indeed variables
 var indeedResults = [];
+indeedResults[0] = "Indeed";
+var numIndeedResults = Number.MAX_VALUE;
+
+//career builder variables
 var careerBuilderResults = [];
+careerBuilderResults[0] = "CareerBuilder";
+var numCBPages = Number.MAX_VALUE;
+
+var numDupes = 0;
+
+var map = {};
+
+// //Postgres db
+// var pg = require('pg');
+// var connectionString = process.env.DATABASE_URL;
+// var client;
+
+// client = new pg.Client(connectionString);
+// client.connect();
+
+
+// var getDb = function(req, res) {
+// 	//var query = client.query('INSERT INTO visits(date) values($1)', [new Date()]);
+// 	var query = client.query('drop table testTable');
+// 	query.on('row', function(result) {
+// 		console.log("db row: " + JSON.stringify(result));
+// 		if (!result) {
+// 			console.log("no data found");
+// 			return res.send('no data found');
+// 		}
+// 	});
+
+
+// 	//query.on('end', function() { client.end(); });
+// };
 
 //Route for root page
 var getMain = function(req, res) {
@@ -20,39 +56,164 @@ var postSearch = function(req, res) {
 	console.log("Source: " + source);
 
 	if (source == "indeed") {
-		getIndeed(query, location, function(err, data) {
-			callbackIndeed(err, data, function(err, data) {
-				if (err) {
-					req.session.message = err;
-					res.redirect('/');
-				} else {
-					res.render('results.ejs', {data: indeedResults});
-				}
-				
-			})
+		getIndeed(query, location, 0, function(err, data) {
+			if (err) {
+				req.session.message = err;
+				res.redirect('/');
+			} else {
+				res.render('results.ejs', {data: data, numDupes: numDupes, queryType: "indeed"});
+			}
 		})
 	} else if (source == "cb") {
-		getCareerBuilder(query, location, function(err, data) {
-			callbackCareerBuilder(err, data, function(err, data) {
-				if (err) {
-					req.session.message = err;
-					res.redirect('/');
-				} else {
-					res.render('results.ejs', {data: careerBuilderResults});
-				}
-			})
+		getCareerBuilder(query, location, 1, function(err, data) {
+			if (err) {
+				req.session.message = err;
+				res.redirect('/');
+			} else {
+				res.render('results.ejs', {data: data, numDupes: numDupes, queryType: "cb"});
+			}
+		})
+	} else if (source == "combine") {
+		aggregateMaps(query, location, function(err, data) {
+			if (err) {
+				req.session.message = err;
+				res.redirect('/');
+			} else {
+				res.render('results.ejs', {data: map, numDupes: numDupes, queryType: "combine"});
+				//res.render('results.ejs', {data: data});
+			}
 		})
 	}
 
 	
 };
 
-var getCareerBuilder = function(query, location, callbackToSearch) {
+var aggregateMaps = function(query, location, callbackToSearch) {
+	var indeedDone = false;
+	var cbDone = false;
+	var loop = true;
+	var advanced = false;
+
+	getIndeed(query, location, 0, function(err, data) {
+		indeedDone = true;
+		if (cbDone && !advanced) {
+			advanced = true;
+			putIndeedIntoMap(1, function() {
+				putCBIntoMap(1, function() {
+					callbackToSearch(null, "done");
+				})
+			});
+		}
+	});
+
+	getCareerBuilder(query, location, 1, function(err, data) {
+		cbDone = true;
+		if (indeedDone && !advanced) {
+			advanced = true;
+			putIndeedIntoMap(1, function() {
+				putCBIntoMap(1, function() {
+					callbackToSearch(null, "done");
+				})
+			});
+		}
+	});
+};
+
+var putIndeedIntoMap = function(i, callback) {
+	console.log("Putting indeed result " + i + " into map");
+	if (i == indeedResults.length) {
+		console.log("done putting indeed");
+		callback(null, "done putting indeed");
+	} else if (indeedResults[i]) {
+		var company = JSON.stringify(indeedResults[i].company['$text']);
+		var city = JSON.stringify(indeedResults[i].city['$text']);
+		var state = JSON.stringify(indeedResults[i].state['$text']);
+		var jobTitle = JSON.stringify(indeedResults[i].jobtitle['$text']);
+		var snippet = JSON.stringify(indeedResults[i].snippet['$text']);
+		var date = JSON.stringify(indeedResults[i].date['$text']);
+		var url = JSON.stringify(indeedResults[i].url['$text']);
+
+		var hash = hashJob(company, city, state, jobTitle, snippet);
+		var value = "i_company: " + company + "i_city: " + city + "i_state: " + state 
+					+ "i_jobTitle: " + jobTitle + "i_snippet: " + snippet + "i_date: " + date
+					+ "i_url: " + url;  
+		if(!map[hash]) {
+				map[hash] = value;
+		} else {
+			numDupes++;
+			var v = map[hash];
+			v += " DUPLICATE: " + value;
+			map[hash] = v;
+		}
+		putIndeedIntoMap(i+1, callback);
+	}
+	
+}
+
+var putCBIntoMap = function(i, callback) {
+	console.log("Putting careerBuilder result " + i + " into map");
+	if (i == careerBuilderResults.length) {
+		console.log("numDupes: " + numDupes);
+		console.log("done putting CB");
+		callback(null, "done putting CB");
+	} else if (careerBuilderResults[i]) {
+		var company = JSON.stringify(careerBuilderResults[i].Company['$text']);
+		var city = JSON.stringify(careerBuilderResults[i].City['$text']);
+		var state = JSON.stringify(careerBuilderResults[i].State['$text']);
+		var jobTitle = JSON.stringify(careerBuilderResults[i].JobTitle['$text']);
+		var snippet = JSON.stringify(careerBuilderResults[i].DescriptionTeaser['$text']);
+		var date = JSON.stringify(careerBuilderResults[i].PostedDate['$text']);
+		var url = JSON.stringify(careerBuilderResults[i].JobServiceURL['$text']);
+
+		var hash = hashJob(company, city, state, jobTitle, snippet);
+		var value = "cb_company: " + company + "cb_city: " + city + "cb_state: " + state 
+					+ "cb_jobTitle: " + jobTitle + "cb_snippet: " + snippet + "cb_date: " + date
+					+ "cb_url: " + url;  
+		if(!map[hash]) {
+				map[hash] = value;
+		} else {
+			numDupes++;
+			var v = map[hash];
+			v += " DUPLICATE: " + value;
+			map[hash] = v;
+		}
+
+		putCBIntoMap(i+1, callback);
+	}
+	
+}
+
+var hashJob = function(company, city, state, jobTitle, snippet) {
+	var normComp = normalizeString(company);
+	var normCity = normalizeString(city);
+	var normState = normalizeString(state);
+	var normJobTitle = normalizeString(jobTitle);
+	var normSnip = normalizeString(snippet);
+	if (normSnip.length > 100) {
+			normSnip = normSnip.substring(0, 100);
+		}
+	var key = normComp + normCity + normState + normJobTitle + normSnip;
+	var hash = crypto.createHash('md5').update(key).digest('hex');
+	return hash;
+}
+
+var normalizeString = function(str) {
+	var ret = '';
+	if (str) {
+		ret = str.replace(/\s/g, '');
+	}
+	
+	return ret.toLowerCase();
+};
+
+var getCareerBuilder = function(query, location, page, callbackToSearch) {
 	var i = 0;
 	var cbQueryPath = "/v1/jobsearch?DeveloperKey=WDHS8FY734KMFC4YC4ZP";
 
 	if (!query) {
 		callbackToSearch("Please specify a job type", null);
+	} else if (page > numCBPages) {
+		callbackToSearch(null, careerBuilderResults);
 	} else {
 		cbQueryPath += "&Keywords=";
 		var queryArray = query.split(" ");
@@ -68,104 +229,78 @@ var getCareerBuilder = function(query, location, callbackToSearch) {
 			}
 		}
 
-		console.log(cbQueryPath);
+		cbQueryPath += "&PageNumber=" + page;
+
+		console.log("Career Builder query: api.careerbuilder.com" + cbQueryPath);
+
+		var options = {
+			host: 'api.careerbuilder.com',
+			path: cbQueryPath
+		};
+
+		var request = http.get(options).on('response', function(response) {
+			console.log("got an http response from cb");
+			//callbackToSearch(null, response);
+			callbackCareerBuilder(null, response, page, function(err, data) {
+				if (err) {
+					callbackToSearch(err, careerBuilderResults);
+				} else {
+					getCareerBuilder(query, location, page+1, callbackToSearch);
+				}
+			});
+		});
 	}
-
-	var options = {
-		host: 'api.careerbuilder.com',
-		path: cbQueryPath
-	};
-
-	var request = http.get(options).on('response', function(response) {
-		console.log(response);
-		callbackToSearch(null, response);
-	});
 };
 
-var callbackCareerBuilder = function(err, data, callbackErr) {
+var callbackCareerBuilder = function(err, data, page, callbackErr) {
 
 	if (err) {
+		console.log("callbackCareerBuilder error!");
 		callbackErr(err, null);
 	} else if (data) {
-		console.log("reached callback");
+		console.log("Processing career builder page " + page);
 		var xml = new XmlStream(data, 'utf8');
-		xml.preserve('JobSearchResult', true);
-		xml.collect('subitem');
-		careerBuilderResults[0] = "CareerBuilder";
-		var i = 1;
 		
-		xml.on('endElement: JobSearchResult', function(item) {
-		  careerBuilderResults[i] = {};
-		  careerBuilderResults[i].company = JSON.stringify(item.Company['$name']) +' : ' 
-		  					 + JSON.stringify(item.Company['$text']);
-		  careerBuilderResults[i].companyDID = JSON.stringify(item.CompanyDID['$name']) +' : ' 
-		  					 + JSON.stringify(item.CompanyDID['$text']);
-		  careerBuilderResults[i].companyDetailsURL = JSON.stringify(item.CompanyDetailsURL['$name']) +' : ' 
-		  					 + JSON.stringify(item.CompanyDetailsURL['$text']);
-		  careerBuilderResults[i].DID = JSON.stringify(item.DID['$name']) +' : ' 
-		  					 + JSON.stringify(item.DID['$text']);
-		  careerBuilderResults[i].oNetCode = JSON.stringify(item.OnetCode['$name']) +' : ' 
-		  					 + JSON.stringify(item.OnetCode['$text']);
-		  careerBuilderResults[i].oNetFriendlyTitle = JSON.stringify(item.ONetFriendlyTitle['$name']) +' : ' 
-		  					 + JSON.stringify(item.ONetFriendlyTitle['$text']);
-		  careerBuilderResults[i].descriptionTeaser = JSON.stringify(item.DescriptionTeaser['$name']) +' : ' 
-		  					 + JSON.stringify(item.DescriptionTeaser['$text']);
-		  careerBuilderResults[i].distance = JSON.stringify(item.Distance['$name']) +' : ' 
-		  					 + JSON.stringify(item.Distance['$text']);
-		  careerBuilderResults[i].employmentType = JSON.stringify(item.EmploymentType['$name']) +' : ' 
-		  					 + JSON.stringify(item.EmploymentType['$text']);
-		  careerBuilderResults[i].educationRequired = JSON.stringify(item.EducationRequired['$name']) +' : ' 
-		  					 + JSON.stringify(item.EducationRequired['$text']);
-		  careerBuilderResults[i].experienceRequired = JSON.stringify(item.ExperienceRequired['$name']) +' : ' 
-		  					 + JSON.stringify(item.ExperienceRequired['$text']);
-		  careerBuilderResults[i].jobDetailsURL = JSON.stringify(item.JobDetailsURL['$name']) +' : ' 
-		  					 + JSON.stringify(item.JobDetailsURL['$text']);
-		  careerBuilderResults[i].jobServiceURL = JSON.stringify(item.JobServiceURL['$name']) +' : ' 
-		  					 + JSON.stringify(item.JobServiceURL['$text']);
-		  careerBuilderResults[i].location = JSON.stringify(item.Location['$name']) +' : ' 
-		  					 + JSON.stringify(item.Location['$text']);
-		  careerBuilderResults[i].displayCity = JSON.stringify(item.DisplayCity['$name']) +' : ' 
-		  					 + JSON.stringify(item.DisplayCity['$text']);
-		  careerBuilderResults[i].city = JSON.stringify(item.City['$name']) +' : ' 
-		  					 + JSON.stringify(item.City['$text']);
-		  careerBuilderResults[i].state = JSON.stringify(item.State['$name']) +' : ' 
-		  					 + JSON.stringify(item.State['$text']);
-		  careerBuilderResults[i].locationLatitude = JSON.stringify(item.LocationLatitude['$name']) +' : ' 
-		  					 + JSON.stringify(item.LocationLatitude['$text']);
-		  careerBuilderResults[i].locationLongitude = JSON.stringify(item.LocationLongitude['$name']) +' : ' 
-		  					 + JSON.stringify(item.LocationLongitude['$text']);
-		  careerBuilderResults[i].postedDate = JSON.stringify(item.PostedDate['$name']) +' : ' 
-		  					 + JSON.stringify(item.PostedDate['$text']);
-		  careerBuilderResults[i].pay = JSON.stringify(item.Pay['$name']) +' : ' 
-		  					 + JSON.stringify(item.Pay['$text']);
-		  careerBuilderResults[i].similarJobsURL = JSON.stringify(item.SimilarJobsURL['$name']) +' : ' 
-		  					 + JSON.stringify(item.SimilarJobsURL['$text']);
-		  careerBuilderResults[i].jobTitle = JSON.stringify(item.JobTitle['$name']) +' : ' 
-		  					 + JSON.stringify(item.JobTitle['$text']);
-		  careerBuilderResults[i].companyImageUrl = JSON.stringify(item.CompanyImageURL['$name']) +' : ' 
-		  					 + JSON.stringify(item.CompanyImageURL['$text']);
-		  careerBuilderResults[i].applyRequirements = JSON.stringify(item.ApplyRequirements['$name']) +' : ' 
-		  					 + JSON.stringify(item.ApplyRequirements['$text']);
-		  careerBuilderResults[i].skills = JSON.stringify(item.Skills['$name']) +' : ' 
-		  					 + JSON.stringify(item.Skills['$text']);
-		  
-		  i++;
-		  //res.render('results.ejs', {data: item[0].jobtitle});
+		//Get total CB pages
+		xml.preserve('TotalPages', true);
+		xml.on('endElement: TotalPages', function(item) {
+			numCBPages = parseInt(item['$text']);
+			console.log("Total number of CB Pages: " + numCBPages);
 		});
 
-		xml.on('endElement: Results', function(item) {
-			console.log(careerBuilderResults);
+		xml.preserve('JobSearchResult', true);
+		xml.collect('subitem');
+		
+		var i = (page -1) * 25 + 1;
+		xml.on('endElement: JobSearchResult', function(item) {
+			console.log("Adding career builder job " + i);
+			careerBuilderResults[i] = item;
+		 //  careerBuilderResults[i].company = JSON.stringify(item.Company['$name']) +' : ' 
+		 //  					 + JSON.stringify(item.Company['$text']);
+		 //  careerBuilderResults[i].companyDID = JSON.stringify(item.CompanyDID['$name']) +' : ' 
+		 //  					 + JSON.stringify(item.CompanyDID['$text']);
+		 //  careerBuilderResults[i].companyDetailsURL = JSON.stringify(item.CompanyDetailsURL['$name']) +' : ' 
+		 //  					 + JSON.stringify(item.CompanyDetailsURL['$text']);
+		 //  careerBuilderResults[i].DID = JSON.stringify(item.DID['$name']) +' : ' 
+		 //  					 + JSON.stringify(item.DID['$text']);
+		  
+		  i++;
+		});
+
+		xml.on('endElement: Results', function() {
 			callbackErr(null, careerBuilderResults);
-		})
+		});
 	}
 };
 
-var getIndeed = function(query, location, callbackToSearch) {
+var getIndeed = function(query, location, startIndex, callbackToSearch) {
 	var i = 0;
 
 	var indeedQueryPath = "/ads/apisearch?publisher=1474148037537663";
 	if (!query) {
 		callbackToSearch("Please specify a job type", null);
+	} else if (startIndex >= numIndeedResults || startIndex > 1000) {
+		callbackToSearch(null, indeedResults);
 	} else {
 		// add the search for query into the path
 		indeedQueryPath += "&q=";
@@ -181,73 +316,67 @@ var getIndeed = function(query, location, callbackToSearch) {
 				indeedQueryPath += "+" + locationArray[i];
 			}
 		}
+		indeedQueryPath += "&start=" + startIndex + "&limit=25";
+		indeedQueryPath += "&sort=&radius=&st=&jt=&fromage=&filter=&latlong=1&co=us&chnl=&userip=1.2.3.4&useragent=Mozilla/%2F4.0%28Firefox%29&v=2";
+		console.log("Indeed query: api.indeed.com" + indeedQueryPath);
+		
+		var options = {
+			host: 'api.indeed.com',
+			path: indeedQueryPath
+		};
 
-		indeedQueryPath += "&sort=&radius=&st=&jt=&start=&limit=&fromage=&filter=&latlong=1&co=us&chnl=&userip=1.2.3.4&useragent=Mozilla/%2F4.0%28Firefox%29&v=2";
-		console.log(indeedQueryPath);
+		var request = http.get(options).on('response', function(response) {
+			console.log("got an http response from indeed");
+			callbackIndeed(null, response, startIndex, function(err, data) {
+				if (err) {
+					callbackToSearch(null, indeedResults);
+				} else {
+					getIndeed(query, location, startIndex+25, callbackToSearch);
+				}
+			});
+		}); 
 	}
-
-	//'/ads/apisearch?publisher=1474148037537663&q=java&l=austin%2C+tx&sort=&radius=&st=&jt=&start=&limit=&fromage=&filter=&latlong=1&co=us&chnl=&userip=1.2.3.4&useragent=Mozilla/%2F4.0%28Firefox%29&v=2'
-	var options = {
-		host: 'api.indeed.com',
-		path: indeedQueryPath
-	};
-
-	var request = http.get(options).on('response', function(response) {
-			callbackToSearch(null, response);
-	}); 
 };
 
-var callbackIndeed = function(err, data, callbackErr) {
+var callbackIndeed = function(err, data, startIndex, callbackErr) {
 	if (err) {
+		console.log("callbackIndeed error!");
 		callbackErr(err, null);
 	} else if (data) {
+		console.log("Processing indeed start index " + startIndex);
 		var xml = new XmlStream(data, 'utf8');
+		
+		//Get total indeed results
+		xml.preserve('totalresults', true);
+		xml.on('endElement: totalresults', function(item) {
+			numIndeedResults = parseInt(item['$text']);
+			console.log("Total number of Indeed results: " + numIndeedResults);
+		});
+
 		xml.preserve('result', true);
 		xml.collect('subitem');
-		indeedResults[0] = "Indeed";
-		var i = 1;
 		
+		var i = startIndex + 1;
 		xml.on('endElement: result', function(item) {
-		  indeedResults[i] = {};
-		  indeedResults[i].jobtitle = JSON.stringify(item.jobtitle['$name']) +' : ' 
-		  					 + JSON.stringify(item.jobtitle['$text']);
-		  indeedResults[i].company = JSON.stringify(item.company['$name']) +' : ' 
-		  					 + JSON.stringify(item.company['$text']);
-		  indeedResults[i].city = JSON.stringify(item.city['$name']) +' : ' 
-		  					 + JSON.stringify(item.city['$text']);
-		  indeedResults[i].state = JSON.stringify(item.state['$name']) +' : ' 
-		  					 + JSON.stringify(item.state['$text']);
-		  indeedResults[i].country = JSON.stringify(item.country['$name']) +' : ' 
-		  					 + JSON.stringify(item.country['$text']);
-		  indeedResults[i].source = JSON.stringify(item.source['$name']) +' : ' 
-		  					 + JSON.stringify(item.source['$text']);
-		  indeedResults[i].date = JSON.stringify(item.date['$name']) +' : ' 
-		  					 + JSON.stringify(item.date['$text']);
-		  indeedResults[i].snippet = JSON.stringify(item.snippet['$name']) +' : ' 
-		  					 + JSON.stringify(item.snippet['$text']);
-		  indeedResults[i].url = JSON.stringify(item.url['$name']) +' : ' 
-		  					 + JSON.stringify(item.url['$text']);
-		  indeedResults[i].latitude = JSON.stringify(item.latitude['$name']) +' : ' 
-		  					 + JSON.stringify(item.latitude['$text']);
-		  indeedResults[i].longitude = JSON.stringify(item.longitude['$name']) +' : ' 
-		  					 + JSON.stringify(item.longitude['$text']);
-		  indeedResults[i].jobkey = JSON.stringify(item.jobkey['$name']) +' : ' 
-		  					 + JSON.stringify(item.jobkey['$text']);
-		  indeedResults[i].sponsored = JSON.stringify(item.sponsored['$name']) +' : ' 
-		  					 + JSON.stringify(item.sponsored['$text']);
-		  indeedResults[i].expired = JSON.stringify(item.expired['$name']) +' : ' 
-		  					 + JSON.stringify(item.expired['$text']);
+			console.log("Adding indeed job " + i);
+		  	indeedResults[i] = item;
+		  // indeedResults[i] = {};
+		  // indeedResults[i].jobtitle = JSON.stringify(item.jobtitle['$name']) +' : ' 
+		  // 					 + JSON.stringify(item.jobtitle['$text']);
+		  // indeedResults[i].company = JSON.stringify(item.company['$name']) +' : ' 
+		  // 					 + JSON.stringify(item.company['$text']);
+		  // indeedResults[i].city = JSON.stringify(item.city['$name']) +' : ' 
+		  // 					 + JSON.stringify(item.city['$text']);
+		  // indeedResults[i].state = JSON.stringify(item.state['$name']) +' : ' 
+		  // 					 + JSON.stringify(item.state['$text']);
 		  i++;
-		  //res.render('results.ejs', {data: item[0].jobtitle});
 		});
 
 		xml.on('endElement: results', function(item) {
-			console.log(indeedResults);
 			callbackErr(null, indeedResults);
-		})
+		});
 	}
 };
-
 
 
 

@@ -8,55 +8,55 @@
 	<script src="http://code.jquery.com/jquery-1.10.1.min.js"></script>
 		<script type="text/javascript">
 	var test = <%- JSON.stringify(data)%>;
-	var html = '';
-	if (test[0] == "Indeed") {
-		for (i = 1; i < 11; i++){
-		document.write("<p>" + test[i].jobtitle + "<br>" 
-							 + test[i].company + "<br>"
-		  					 + test[i].city + "<br>"
-		  					 + test[i].state + "<br>"
-		  					 + test[i].country + "<br>"
-		  					 + test[i].source + "<br>"
-		  					 + test[i].date + "<br>"
-		  					 + test[i].snippet + "<br>"
-		  					 + test[i].url + "<br>"
-		  					 + test[i].latitude + "<br>"
-		  					 + test[i].longitude + "<br>"
-		  					 + test[i].jobkey + "<br>"
-		  					 + test[i].sponsored + "<br>"
-		  					 + test[i].expired + "<br>"
-		  					 + "</p>");
-		}
-	} else if (test[0] == "CareerBuilder") {
-		for (i = 1; i < 11; i++){
-		document.write("<p>" + test[i].jobTitle + "<br>" 
-							 + test[i].company + "<br>"
-		  					 + test[i].city + "<br>"
-		  					 + test[i].state + "<br>"
-		  					 + test[i].companyDID + "<br>"
-		  					 + test[i].companyDetailsURL + "<br>"
-		  					 + test[i].DID + "<br>"
-		  					 + test[i].oNetCode + "<br>"
-		  					 + test[i].oNetFriendlyTitle + "<br>"
-		  					 + test[i].descriptionTeaser + "<br>"
-		  					 + test[i].distance + "<br>"
-		  					 + test[i].employmentType + "<br>"
-		  					 + test[i].educationRequired + "<br>"
-		  					 + test[i].experienceRequired + "<br>"
-		  					 + test[i].jobDetailsURL + "<br>"
-		  					 + test[i].location + "<br>"
-		  					 + test[i].displayCity + "<br>"
-		  					 + test[i].locationLatitude + "<br>"
-		  					 + test[i].locationLongitude + "<br>"
-		  					 + test[i].postedDate + "<br>"
-		  					 + test[i].pay + "<br>"
-		  					 + test[i].similarJobsURL + "<br>"
-		  					 + test[i].companyImageUrl + "<br>"
-		  					 + test[i].applyRequirements + "<br>"
-		  					 + test[i].skills + "<br>"
+	var type = <%- JSON.stringify(queryType)%>;
 
-		  					 + "</p>");
+	var html = '';
+	if (type == "indeed") {
+
+		var text = "<p>Number of results: " + (test.length - 1) + "</p>";
+		for (i = 1; i < test.length; i++){
+			text += "<p>";
+			var item = test[i];
+			var keys = Object.keys(item);
+			for (j = 0; j < keys.length; j++) {
+				var k = keys[j];
+				if (String(k).indexOf("$") == -1) {
+					var itemValue = item[k];
+					text += "key: " + k + " value: " + itemValue['$text'] + "<br>";
+				}
+				
+			}
+			
+		text += "<br><br></p>";
 		}
+		document.write(text);
+	} else if (type == "cb") {
+		var text = "<p>Number of results: " + (test.length - 1) + "</p>";
+		for (i = 1; i < test.length; i++){
+			text += "<p>";
+			var item = test[i];
+			var keys = Object.keys(item);
+			for (j = 0; j < keys.length; j++) {
+				var k = keys[j];
+				if (String(k).indexOf("$") == -1) {
+					var itemValue = item[k];
+					text += "key: " + k + " value: " + itemValue['$text'] + "<br>";
+				}
+				
+			}
+			text += "<br><br></p>";	
+		}
+		document.write(text);
+	} else if (type == "combine") {
+		var text = "<p>Number of duplicates: " + <%= numDupes %>  + "</p><br>";
+		var keys = Object.keys(test);
+		text += "Number of results: " + keys.length + "<br>"; 
+		
+		for (i = 0; i < keys.length; i++) {
+			var k = keys[i];
+			text += "<p> hash: " + k + "<br>" + test[k] + "<br><br></p>";
+		}
+		document.write(text);
 	}
 
 	</script>
