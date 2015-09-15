@@ -9,6 +9,10 @@
 </head>
 <body>
 	<div class="container">
+		<h3>Hi, <% if (name) { %>
+				<%=name%>
+				<% } %>
+		</h3>
 		<h3>Search</h3>
 		<form action="/search" method="post" autocomplete="off" role="form">
 			<div class="form-group">
@@ -22,7 +26,7 @@
 			<div class="form-group">
 				<label for="srce">Source</label>
 				<input type="radio" class="form-control" id="source" name="srce" value="indeed">
-				<label for="srce_indeed">Indeed</label>
+				<label for="srce_indeed">Indeed</label>		
 				<input type="radio" class="form-control" id="source" name="srce" value="cb">
 				<label for="srce_cb">CareerBuilder</label>
 				<input type="radio" class="form-control" id="source" name="srce" value="combine">

@@ -4,6 +4,8 @@ var async = require('async');
 var http = require('http');
 var XmlStream = require('xml-stream');
 var crypto = require('crypto');
+var bcrypt = require('bcrypt-nodejs');
+var db = require('../models/postgresDB.js');
 
 //indeed variables
 var indeedResults = [];
@@ -19,33 +21,18 @@ var numDupes = 0;
 
 var map = {};
 
-// //Postgres db
-// var pg = require('pg');
-// var connectionString = process.env.DATABASE_URL;
-// var client;
 
-// client = new pg.Client(connectionString);
-// client.connect();
-
-
-// var getDb = function(req, res) {
-// 	//var query = client.query('INSERT INTO visits(date) values($1)', [new Date()]);
-// 	var query = client.query('drop table testTable');
-// 	query.on('row', function(result) {
-// 		console.log("db row: " + JSON.stringify(result));
-// 		if (!result) {
-// 			console.log("no data found");
-// 			return res.send('no data found');
-// 		}
-// 	});
-
-
-// 	//query.on('end', function() { client.end(); });
-// };
 
 //Route for root page
 var getMain = function(req, res) {
-	res.render('main.ejs');
+	if (req.session.user) {
+		var name = req.session.fullname;
+		var message = getMessage(req);
+		
+		res.render('main.ejs', {name: name, message: message});
+	} else {
+		res.render('main.ejs', {name: null, message: null});
+	}
 };
 
 var postSearch = function(req, res) {
@@ -378,12 +365,71 @@ var callbackIndeed = function(err, data, startIndex, callbackErr) {
 	}
 };
 
+//Route for signup page /signup
+var getSignup = function(req, res) {
+	//Render the page, given any messages
+	var message = "";
+	if (req.session.message) {
+		message = req.session.message;
+	}
+	res.render('signup.ejs', {message: message});
+};
 
+//Route for creating a user via POST
+var postCreateUser = function(req, res) {
+	var username = req.body.username;
+	var password = req.body.password;
+	var email = req.body.email;
+	var firstname = req.body.firstname;
+	var lastname = req.body.lastname;
+
+	//Check if any field wasn't filled in
+	if (!username || !password || !email || !firstname || !lastname) {
+		req.session.message = "All fields must be filled in";
+		res.redirect('/signup');
+	} else {
+		//Encrypt the password after generating a salt
+		bcrypt.genSalt(10, function(err, salt) {
+			if (err) {
+				req.session.message = "There was an error generating a salt: " + err;
+				res.redirect('/signup');
+			} else {
+				//Hash the password
+				bcrypt.hash(password, salt, null, function(err, hash) {
+					if (err) {
+						req.session.message = "There was an error encrypting your password: " + err;
+						res.redirect('/signup');
+					}
+
+					//Add the user with the hashed password
+					db.add_user(username, {
+						Pass: hash,
+						Email: email,
+						Firstname: firstname,
+						Lastname: lastname
+					}, function(err, data) {
+						if (err) {
+							req.session.message = err;
+							res.redirect('/signup');
+						} else {
+							//Log the user in and redirect to the home page
+							req.session.user = username;
+							req.session.fullname = firstname + " " + lastname;
+							res.redirect('/');
+						}
+					});
+				});	
+			}
+		});
+	}
+};
 
 var routes = {
 	get_main: getMain,
 	get_indeed: getIndeed,
-	post_search: postSearch
+	post_search: postSearch,
+	get_signup: getSignup,
+	post_create_user: postCreateUser
 }
 
 module.exports = routes;
