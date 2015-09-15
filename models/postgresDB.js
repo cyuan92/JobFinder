@@ -11,11 +11,13 @@ var lookupUser = function(username, callback) {
 	//var query = client.query('INSERT INTO visits(date) values($1)', [new Date()]);
 	var query = client.query('select * from users where username = $1', [username]);
 	var finished = false;
-	
+	var loginResults = null;
+
 	query.on('row', function(result) {
 		console.log("db row: " + JSON.stringify(result));
 		if (result) {
 			finished = true;
+			loginResults = JSON.stringify(result);
 		} 
 	});
 
@@ -23,7 +25,7 @@ var lookupUser = function(username, callback) {
 		if (!finished) {
 			callback("That username doesn't match our records", "No User");
 		} else {
-			callback(null, result);
+			callback(null, loginResults);
 		}
 		
 	});
@@ -60,7 +62,8 @@ var addUser = function(username, profile, callback) {
 };
 
 var database = {
-	add_user: addUser
+	add_user: addUser,
+	lookup_user: lookupUser
 };
                                         
 module.exports = database;

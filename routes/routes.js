@@ -31,7 +31,7 @@ var getMain = function(req, res) {
 		
 		res.render('main.ejs', {name: name, message: message});
 	} else {
-		res.render('main.ejs', {name: null, message: null});
+		res.redirect('/');
 	}
 };
 
@@ -365,6 +365,75 @@ var callbackIndeed = function(err, data, startIndex, callbackErr) {
 	}
 };
 
+//Route for login /login
+var postLogin = function(req, res) {
+	//Get the username and password from the form
+	var username = req.body.username;
+	var password = req.body.password;
+
+	//Check if any field wasn't filled in
+	if (!username || !password) {
+		req.session.message = "All fields must be filled in";
+		res.redirect('/');
+	} else {
+		//Check if the username and password match the database
+		db.lookup_user(username, function (err, data) {
+			if (err) {
+				//Redirect to the login page with the error
+				req.session.message = err;
+				res.redirect('/');
+			} else {
+				//The user was found if error is null. Get the user's password in the DB
+
+				data = JSON.parse(data);
+				var dbPassword = data.password;
+				var firstname = data.firstname;
+				var lastname = data.lastname;
+
+				//Compare passwords
+				if (!dbPassword) {
+					//If we never found a password, there's a problem...
+					console.log("Database password was not found for user " + username);
+					req.session.message = "There was a problem with your password. Contact the webmaster";
+					res.redirect('/');
+				} else {
+					//Compare the hashed passwords
+					bcrypt.compare(password, dbPassword, function (err, response) {
+						if (response) {
+							//The passwords matched - save the username and full name in the session and redirect to the home page
+							req.session.user = username;
+							
+							//Get and save the user's full name
+							var fullname = firstname + " " + lastname;
+							req.session.fullname = fullname;
+							res.redirect('/main');
+							
+						} else {
+							//The passwords didn't match - redirect to the login page with an error message
+							req.session.message = "This password doesn't match our records";
+							res.redirect('/');	
+						}
+					});
+				}
+			}
+		});
+	}
+};
+
+var getHome = function(req, res) {
+	var message = "";
+	if (req.session.message) {
+		message = req.session.message;
+	}
+
+	if (req.session.user) {
+		var name = req.session.fullname;
+		res.render('main.ejs', {message: message, name: name});
+	} else {
+		res.render('home.ejs', {message: message});
+	}
+}
+
 //Route for signup page /signup
 var getSignup = function(req, res) {
 	//Render the page, given any messages
@@ -429,7 +498,9 @@ var routes = {
 	get_indeed: getIndeed,
 	post_search: postSearch,
 	get_signup: getSignup,
-	post_create_user: postCreateUser
+	post_create_user: postCreateUser,
+	post_login: postLogin,
+	get_home: getHome
 }
 
 module.exports = routes;
