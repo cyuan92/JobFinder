@@ -18,6 +18,7 @@
     "xml-stream": "*",
     "node-expat": "*",
     "pg": "4.x",
-    "crypto": "*"
+    "crypto": "*",
+    "bcrypt-nodejs": "*"
   }
 }
