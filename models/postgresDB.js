@@ -9,15 +9,25 @@ client.connect();
 //Looks up a user given the username
 var lookupUser = function(username, callback) {
 	//var query = client.query('INSERT INTO visits(date) values($1)', [new Date()]);
-	var query = client.query('select * from users where username = ' + username);
+	var query = client.query('select * from users where username = $1', [username]);
+	var finished = false;
+	
 	query.on('row', function(result) {
 		console.log("db row: " + JSON.stringify(result));
 		if (result) {
-			callback(null, result);
-		} else {
-			callback("That username doesn't match our records", "No User");
-		}
+			finished = true;
+		} 
 	});
+
+	query.on('end', function(result) {
+		if (!finished) {
+			callback("That username doesn't match our records", "No User");
+		} else {
+			callback(null, result);
+		}
+		
+	});
+	
 };
 
 //Puts a user into the database
@@ -40,7 +50,7 @@ var addUser = function(username, profile, callback) {
 	                    console.log(err);
 	                    callback(err, null);
 	                } else {
-	                    console.log('row inserted for username: ' + result.rows[0].username);
+	                    console.log('row inserted for username: ' + username);
 	                    client.end();
 	                    callback(null, "user added");
 	                }

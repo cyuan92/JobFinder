@@ -27,7 +27,7 @@ var map = {};
 var getMain = function(req, res) {
 	if (req.session.user) {
 		var name = req.session.fullname;
-		var message = getMessage(req);
+		var message = req.session.message;
 		
 		res.render('main.ejs', {name: name, message: message});
 	} else {
