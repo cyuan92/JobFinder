@@ -40,6 +40,7 @@ var postSearch = function(req, res) {
 	var query = req.body.query;
 	var location = req.body.loc;
 	var source = req.body.srce;
+	var user = req.session.user;
 
 	console.log("Source: " + source);
 
@@ -49,7 +50,7 @@ var postSearch = function(req, res) {
 				req.session.message = err;
 				res.redirect('/');
 			} else {
-				res.render('results.ejs', {data: data, numDupes: numDupes, queryType: "indeed"});
+				res.render('results.ejs', {data: data, numDupes: numDupes, queryType: "indeed", user: user});
 			}
 		})
 	} else if (source == "cb") {
@@ -58,7 +59,7 @@ var postSearch = function(req, res) {
 				req.session.message = err;
 				res.redirect('/');
 			} else {
-				res.render('results.ejs', {data: data, numDupes: numDupes, queryType: "cb"});
+				res.render('results.ejs', {data: data, numDupes: numDupes, queryType: "cb", user: user});
 			}
 		})
 	} else if (source == "combine") {
@@ -67,7 +68,7 @@ var postSearch = function(req, res) {
 				req.session.message = err;
 				res.redirect('/');
 			} else {
-				res.render('results.ejs', {data: map, numDupes: numDupes, queryType: "combine"});
+				res.render('results.ejs', {data: map, numDupes: numDupes, queryType: "combine", user: user});
 				//res.render('results.ejs', {data: data});
 			}
 		})
