@@ -9,6 +9,7 @@
 <head>
 <body>
 	<div class="container">
+		<%- include nav.ejs %>
 
 		<h3>QuestEase Login</h3>
 		<form action="/login" method="post" role="form">
@@ -23,9 +24,7 @@
 				<label for="password">Password</label>
 				<input type="password" class="form-control" id="password" name="password" placeholder="Enter password">
 			</div>
-			<div class="register">
-				<a href="/signup">Sign Up</a>
-			</div>
+			
 			<button type="submit" class="btn btn-primary">Login</button>
 		</form>
 	</div>

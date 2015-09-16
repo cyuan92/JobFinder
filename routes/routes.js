@@ -28,8 +28,9 @@ var getMain = function(req, res) {
 	if (req.session.user) {
 		var name = req.session.fullname;
 		var message = req.session.message;
+		var user = req.session.user;
 		
-		res.render('main.ejs', {name: name, message: message});
+		res.render('main.ejs', {name: name, message: message, user: user});
 	} else {
 		res.redirect('/');
 	}
@@ -420,19 +421,30 @@ var postLogin = function(req, res) {
 	}
 };
 
+//Route for logout
+var getLogout = function(req, res) {
+	//Get the username and password from the form
+	var user = req.session.user;
+	var fullname = req.session.fullname;
+	req.session.user = null;
+	req.session.fullname = null;
+	res.redirect('/');
+};
+
 var getHome = function(req, res) {
 	var message = "";
 	if (req.session.message) {
 		message = req.session.message;
 	}
 
+	var user = req.session.user;
 	if (req.session.user) {
 		var name = req.session.fullname;
-		res.render('main.ejs', {message: message, name: name});
+		res.render('main.ejs', {message: message, name: name, user: user});
 	} else {
-		res.render('home.ejs', {message: message});
+		res.render('home.ejs', {message: message, user: user});
 	}
-}
+};
 
 //Route for signup page /signup
 var getSignup = function(req, res) {
@@ -441,7 +453,8 @@ var getSignup = function(req, res) {
 	if (req.session.message) {
 		message = req.session.message;
 	}
-	res.render('signup.ejs', {message: message});
+	var user = req.session.user;
+	res.render('signup.ejs', {message: message, user: user});
 };
 
 //Route for creating a user via POST
@@ -500,7 +513,8 @@ var routes = {
 	get_signup: getSignup,
 	post_create_user: postCreateUser,
 	post_login: postLogin,
-	get_home: getHome
+	get_home: getHome,
+	get_logout: getLogout
 }
 
 module.exports = routes;

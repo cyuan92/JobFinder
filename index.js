@@ -20,6 +20,7 @@ app.get('/indeed', routes.get_indeed);
 app.post('/search', routes.post_search);
 app.post('/createuser', routes.post_create_user);
 app.post('/login', routes.post_login);
+app.get('/logout', routes.get_logout);
 
 app.listen(app.get('port'), function() {
    console.log("Node app is running at localhost:" + app.get('port'))
