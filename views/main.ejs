@@ -6,6 +6,35 @@
 	<link rel="stylesheet" type="text/css" href="/css/style.css">
 
 	<script src="http://code.jquery.com/jquery-1.10.1.min.js"></script>
+	<script src="http://code.jquery.com/jquery-1.10.2.js"></script>
+	<script src="http://code.jquery.com/ui/1.11.4/jquery-ui.js"></script>
+	<script type="text/javascript">
+		$(document).ready(function () {
+			$('#indeedAdvancedOptions').hide();
+			$('#cbAdvancedOptions').hide();
+
+			$('.advanced').click(function() {
+				// if ($('#advancedOptions').is(':hidden')) {
+				// 	$('#advancedOptions').show("slide", {direction: "right"}, 1000);
+				// } else {
+				// 	$('#advancedOptions').hide("slide", {direction: "right"}, 1000);
+				// }
+				if (document.getElementById('sourceIndeed').checked) {
+					$('#indeedAdvancedOptions').toggle("slide");	
+				} else if (document.getElementById('sourceCB').checked) {
+					$('#cbAdvancedOptions').toggle("slide");
+				}
+				
+			});
+
+			
+		});
+
+		var onClickRadio = function() {
+				$('#indeedAdvancedOptions').hide();
+				$('#cbAdvancedOptions').hide();
+		}
+	</script>
 </head>
 <body>
 	<div class="container">
@@ -14,8 +43,11 @@
 				<%=name%>
 				<% } %>
 		</h3>
+		<div class="searchContainer">
 		<h3>Search</h3>
+
 		<form action="/search" method="post" autocomplete="off" role="form">
+		<div class="searchBasic">
 			<div class="form-group">
 				<label for="query">Search For</label>
 				<input type="text" class="form-control" id="query" name="query" placeholder="Enter search">
@@ -26,16 +58,99 @@
 			</div>
 			<div class="form-group">
 				<label for="srce">Source</label>
-				<input type="radio" class="form-control" id="source" name="srce" value="indeed">
+				<input type="radio" class="form-control" id="sourceIndeed" class="source" name="srce" value="indeed" checked="checked" onclick="onClickRadio()">
 				<label for="srce_indeed">Indeed</label>		
-				<input type="radio" class="form-control" id="source" name="srce" value="cb">
+				<input type="radio" class="form-control" id="sourceCB" class="source" name="srce" value="cb" onclick="onClickRadio()">
 				<label for="srce_cb">CareerBuilder</label>
-				<input type="radio" class="form-control" id="source" name="srce" value="combine">
+				<input type="radio" class="form-control" id="sourceCombine" class="source" name="srce" value="combine" onclick="onClickRadio()">
 				<label for="srce_combine">Combine</label>
 			</div>
 			
-			<button type="submit" class="btn btn-primary">Find Jobs</button>
+			<a href="#" class="advanced">Advanced Search</a>
+			<button type="submit" class="btn btn-primary" style="display: block;">Find Jobs</button>
+		</div>
+
+		<div class="searchAdvanced" id='indeedAdvancedOptions'>
+			<div class="form-group">
+				<label for="sortBy">Sort By</label>
+				<select class="form-control" id="sortBy">
+					<option>Relevance</option>
+					<option>Date</option>
+				</select>
+			</div>
+			<div class="form-group">
+				<label for="distance">Distance</label>
+				<select class="form-control" id="distance">
+					<option>within 5 miles</option>
+					<option>within 10 miles</option>
+					<option selected="selected">within 25 miles</option>
+					<option>within 50 miles</option>
+					<option>within 100 miles</option>
+				</select>
+			</div>
+			<div class="form-group">
+				<label for="jobType">Job Type</label>
+				<select class="form-control" id="jobType">
+					<option selected="selected">Full-time</option>
+					<option>Part-time</option>
+					<option>Contract</option>
+					<option>Internship</option>
+					<option>Temporary</option>
+				</select>
+			</div>
+		</div>
+		
+		<div class="searchAdvanced" id='cbAdvancedOptions'>
+			<div class="form-group">
+				<label for="compName">Company Name</label>
+				<input type="text" class="form-control" id="compName" name="compName" placeholder="Enter company name">
+			</div>
+
+			<div class="form-group">
+				<label for="jobTitle">Job Title</label>
+				<input type="text" class="form-control" id="jobTitle" name="jobTitle" placeholder="Enter job title">
+			</div>
+
+			<div class="form-group">
+				<label for="sortByCb">Sort By</label>
+				<select class="form-control" id="sortByCb">
+					<option>Relevance</option>
+					<option>Date</option>
+					<option>Pay</option>
+					<option>Title</option>
+					<option>Company</option>
+					<option>Distance</option>
+					<option>Location</option>
+				</select>
+			</div>
+
+			<div class="form-group">
+				<label for="distanceCb">Distance</label>
+				<select class="form-control" id="distanceCb">
+					<option></option>
+					<option>within 5 miles</option>
+					<option>within 10 miles</option>
+					<option>within 20 miles</option>
+					<option>within 30 miles</option>
+					<option>within 50 miles</option>
+					<option>within 100 miles</option>
+					<option>within 150 miles</option>
+				</select>
+			</div>
+
+			<div class="form-group">
+				<label for="jobTypeCb">Job Type</label>
+				<select class="form-control" id="jobTypeCb">
+					<option selected="selected">Full-time</option>
+					<option>Part-time</option>
+					<option>Contract</option>
+					<option>Internship</option>
+				</select>
+			</div>
+		</div>	
+
 		</form>
+		</div>
 	</div>
 </body>
 </html>

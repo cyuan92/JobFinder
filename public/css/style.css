@@ -181,3 +181,21 @@ span.delete {
 span.delete:hover {
 	color: #666666;
 }
+
+#indeedAdvancedOptions {
+	width: auto;
+	height: auto;
+}
+
+.searchBasic {
+	float: left;
+	width: auto;
+	position: relative;
+}
+
+.searchAdvanced {
+	float: left;
+	width: auto;
+	margin-left: 50px;
+	position: relative;
+}

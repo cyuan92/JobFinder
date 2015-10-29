@@ -17,8 +17,6 @@ var careerBuilderResults = [];
 careerBuilderResults[0] = "CareerBuilder";
 var numCBPages = Number.MAX_VALUE;
 
-var numDupes = 0;
-
 var map = {};
 
 
@@ -42,15 +40,13 @@ var postSearch = function(req, res) {
 	var source = req.body.srce;
 	var user = req.session.user;
 
-	console.log("Source: " + source);
-
 	if (source == "indeed") {
 		getIndeed(query, location, 0, function(err, data) {
 			if (err) {
 				req.session.message = err;
 				res.redirect('/');
 			} else {
-				res.render('results.ejs', {data: data, numDupes: numDupes, queryType: "indeed", user: user});
+				res.render('results.ejs', {data: data, queryType: "indeed", user: user});
 			}
 		})
 	} else if (source == "cb") {
@@ -59,7 +55,7 @@ var postSearch = function(req, res) {
 				req.session.message = err;
 				res.redirect('/');
 			} else {
-				res.render('results.ejs', {data: data, numDupes: numDupes, queryType: "cb", user: user});
+				res.render('results.ejs', {data: data, queryType: "cb", user: user});
 			}
 		})
 	} else if (source == "combine") {
@@ -68,7 +64,7 @@ var postSearch = function(req, res) {
 				req.session.message = err;
 				res.redirect('/');
 			} else {
-				res.render('results.ejs', {data: map, numDupes: numDupes, queryType: "combine", user: user});
+				res.render('results.ejs', {data: map, queryType: "combine", user: user});
 				//res.render('results.ejs', {data: data});
 			}
 		})
@@ -129,7 +125,6 @@ var putIndeedIntoMap = function(i, callback) {
 		if(!map[hash]) {
 				map[hash] = value;
 		} else {
-			numDupes++;
 			var v = map[hash];
 			v += " DUPLICATE: " + value;
 			map[hash] = v;
@@ -142,7 +137,6 @@ var putIndeedIntoMap = function(i, callback) {
 var putCBIntoMap = function(i, callback) {
 	console.log("Putting careerBuilder result " + i + " into map");
 	if (i == careerBuilderResults.length) {
-		console.log("numDupes: " + numDupes);
 		console.log("done putting CB");
 		callback(null, "done putting CB");
 	} else if (careerBuilderResults[i]) {
@@ -161,7 +155,6 @@ var putCBIntoMap = function(i, callback) {
 		if(!map[hash]) {
 				map[hash] = value;
 		} else {
-			numDupes++;
 			var v = map[hash];
 			v += " DUPLICATE: " + value;
 			map[hash] = v;
